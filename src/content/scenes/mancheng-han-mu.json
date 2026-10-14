@@ -1,0 +1,51 @@
+{
+  "chambers": [
+    { "id": "ear-south", "name": "南耳室·车马厩", "size": [16.3, 4.5, 5], "position": [0, 0, 2], "texture": "stone", "vault": "barrel" },
+    { "id": "ear-north", "name": "北耳室·仓厨", "size": [15.6, 4.5, 5], "position": [0, 0, -4.5], "texture": "stone", "vault": "barrel" },
+    { "id": "middle", "name": "中室·厅堂", "size": [11.5, 6.8, 14.9], "position": [0, 0, -16.5], "texture": "stone", "vault": "barrel" },
+    { "id": "rear", "name": "后室·石屋", "size": [4.4, 3.6, 4.6], "position": [-9, 0, -18], "texture": "stone", "vault": "flat" },
+    { "id": "bath", "name": "浴室", "size": [2.2, 2.4, 2], "position": [-9, 0, -21.9], "texture": "stone", "vault": "flat" }
+  ],
+  "corridors": [
+    { "from": "entrance", "to": "ear-south", "length": 14, "width": 3, "height": 2.4, "rise": 2.5 },
+    { "from": "ear-south", "to": "ear-north", "length": 4, "width": 2.8, "height": 2.4 },
+    { "from": "ear-north", "to": "middle", "length": 3, "width": 3, "height": 2.6 },
+    { "from": "middle", "to": "rear", "length": 3, "width": 1.8, "height": 2.0, "door": true },
+    { "from": "rear", "to": "bath", "length": 1, "width": 1.0, "height": 1.9 }
+  ],
+  "furnishings": [
+    { "type": "chariot", "chamber": "ear-south", "position": [-6.5, 0, 0.9], "rotation": 0 },
+    { "type": "chariot", "chamber": "ear-south", "position": [-3.5, 0, 0.9], "rotation": 0.03 },
+    { "type": "chariot", "chamber": "ear-south", "position": [3.5, 0, 0.9], "rotation": -0.03 },
+    { "type": "chariot", "chamber": "ear-south", "position": [6.5, 0, 0.9], "rotation": 0 },
+    { "type": "horse", "chamber": "ear-south", "position": [-6.9, 0, 3.1], "rotation": 0 },
+    { "type": "horse", "chamber": "ear-south", "position": [-6.1, 0, 3.1], "rotation": 0.05 },
+    { "type": "horse", "chamber": "ear-south", "position": [-3.9, 0, 3.1], "rotation": -0.04 },
+    { "type": "horse", "chamber": "ear-south", "position": [-3.1, 0, 3.1], "rotation": 0 },
+    { "type": "horse", "chamber": "ear-south", "position": [3.1, 0, 3.1], "rotation": 0.04 },
+    { "type": "horse", "chamber": "ear-south", "position": [3.9, 0, 3.1], "rotation": 0 },
+    { "type": "horse", "chamber": "ear-south", "position": [6.1, 0, 3.1], "rotation": 0 },
+    { "type": "horse", "chamber": "ear-south", "position": [6.9, 0, 3.1], "rotation": -0.05 },
+    { "type": "timber-house", "chamber": "ear-north", "position": [-4.5, 0, -4.5], "rotation": 0 },
+    { "type": "square-vats", "chamber": "ear-north", "position": [2.8, 0, -3.4], "rotation": 0, "count": 6 },
+    { "type": "square-vats", "chamber": "ear-north", "position": [2.8, 0, -5.6], "rotation": 0, "count": 6 },
+    { "type": "mill", "chamber": "ear-north", "position": [5.8, 0, -4.6], "rotation": 0 },
+    { "type": "shelf", "chamber": "ear-north", "position": [7.0, 0, -4.5], "rotation": 0 },
+    { "type": "canopy", "chamber": "middle", "position": [2.8, 0, -12.2], "rotation": 0 },
+    { "type": "canopy", "chamber": "middle", "position": [-2.8, 0, -12.2], "rotation": 0.3 },
+    { "type": "bronze-set", "chamber": "middle", "position": [0.5, 0, -13.5], "rotation": 0 },
+    { "type": "vessels", "chamber": "middle", "position": [4.8, 0, -13.5], "rotation": 0 },
+    { "type": "vessels", "chamber": "middle", "position": [-4.8, 0, -13.5], "rotation": 0 },
+    { "type": "table", "chamber": "middle", "position": [4.5, 0, -18], "rotation": 0.7 },
+    { "type": "timber-house", "chamber": "middle", "position": [-1.5, 0, -18.5], "rotation": 0 },
+    { "type": "figurines", "chamber": "middle", "position": [5.2, 0, -20.5], "rotation": 1.5708, "count": 5 },
+    { "type": "coffin-bed", "chamber": "rear", "position": [-9, 0, -18], "rotation": 0 },
+    { "type": "grave-goods", "chamber": "rear", "position": [-10.4, 0, -16.2], "rotation": 0.3 },
+    { "type": "figurines", "chamber": "rear", "position": [-7.3, 0, -19.6], "rotation": 1.5708, "count": 2 },
+    { "type": "bath-set", "chamber": "bath", "position": [-9, 0, -21.9], "rotation": 0 }
+  ],
+  "artifacts": [
+    { "id": "jade-burial-suit", "chamber": "rear", "position": [-9, 0.4, -17.45] },
+    { "id": "boshan-lu", "chamber": "middle", "position": [3.2, 0, -14.8] }
+  ]
+}

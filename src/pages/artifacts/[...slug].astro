@@ -1,0 +1,39 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const artifacts = await getCollection('artifacts');
+  return artifacts.map((artifact) => ({ params: { slug: artifact.id }, props: { artifact } }));
+}
+
+const { artifact } = Astro.props;
+const { Content } = await render(artifact);
+const tomb = await getEntry('tombs', artifact.data.tomb);
+
+const jsonld = {
+  '@context': 'https://schema.org',
+  '@type': 'VisualArtwork',
+  name: artifact.data.name,
+  description: artifact.data.description,
+  artMedium: artifact.data.material,
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+};
+---
+
+<BaseLayout title={artifact.data.name} description={artifact.data.description} ogType="article" jsonld={jsonld}>
+  <p class="meta">
+    <a href="/">← 返回目录</a>
+    {tomb && <> · 出土于 <a href={`/tombs/${tomb.id}/`}>{tomb.data.title}</a></>}
+  </p>
+  <h1>{artifact.data.name}</h1>
+  <p class="meta">{artifact.data.period} · {artifact.data.material}</p>
+  <p>
+    {artifact.data.tags.map((t) => <span class="tag">{t}</span>)}
+  </p>
+  <p>{artifact.data.description}</p>
+
+  <article>
+    <Content />
+  </article>
+</BaseLayout>

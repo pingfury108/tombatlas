@@ -1,0 +1,26 @@
+{
+  "name": "tombatlas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "幽宫图志 TombAtlas — 古墓主题在线 3D 博物馆 / 图志",
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^8.0.3",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.8",
+    "three": "^0.186.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.9.3"
+  }
+}

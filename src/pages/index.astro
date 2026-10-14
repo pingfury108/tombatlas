@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const tombs = await getCollection('tombs', ({ data }) => !data.draft);
+const artifacts = await getCollection('artifacts');
+
+const byDynasty = Map.groupBy(tombs, (t) => t.data.dynasty);
+
+const jsonld = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: '幽宫图志 TombAtlas',
+  url: Astro.site?.toString(),
+  description: '古墓主题在线 3D 博物馆 / 图志：程序化生成的墓室漫游与文物解说。',
+};
+---
+
+<BaseLayout title="幽宫图志 TombAtlas" description="古墓主题在线 3D 博物馆 / 图志：浏览墓室结构、查看文物、阅读解说。" jsonld={jsonld}>
+  <h1>幽宫图志</h1>
+  <p class="meta">TombAtlas · 古墓主题在线 3D 博物馆 / 图志 · 内容由站长自维护</p>
+
+  <h2 id="tombs">墓室目录</h2>
+  {
+    [...byDynasty.entries()].map(([dynasty, list]) => (
+      <section>
+        <h3>{dynasty}</h3>
+        {list.map((tomb) => (
+          <p class="card">
+            <a href={`/tombs/${tomb.id}/`}>{tomb.data.title}</a>
+            <span class="meta"> · {tomb.data.region}</span>
+            {tomb.data.tombOwner && <span class="meta"> · {tomb.data.tombOwner}</span>}
+            <br />
+            <span class="meta">{tomb.data.description}</span>
+          </p>
+        ))}
+      </section>
+    ))
+  }
+
+  <h2 id="artifacts">文物</h2>
+  {
+    artifacts.map((a) => (
+      <p class="card">
+        <a href={`/artifacts/${a.id}/`}>{a.data.name}</a>
+        <span class="meta"> · {a.data.period} · {a.data.material}</span>
+        <br />
+        <span class="meta">{a.data.description}</span>
+      </p>
+    ))
+  }
+</BaseLayout>

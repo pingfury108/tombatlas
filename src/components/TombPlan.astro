@@ -1,0 +1,238 @@
+---
+import type { InferEntrySchema } from 'astro:content';
+
+type Scene = InferEntrySchema<'scenes'>;
+type Chamber = Scene['chambers'][number];
+type P = [number, number];
+
+interface Props {
+  scene: Scene;
+  artifactNames: Record<string, string>;
+}
+
+const { scene, artifactNames } = Astro.props;
+
+// 平面投影：x → SVG x，z → SVG y（+z 朝下 = 墓道口在图下方）；比例 20px/米
+const S = 20;
+const WALL_INSET = 0.15; // 内墙线内缩（米）
+
+/** 室中心向 target 方向推进到墙面边缘（与 3D builder 同逻辑） */
+function edge(c: Chamber, t: P): P {
+  const cx = c.position[0];
+  const cz = c.position[2];
+  let dx = t[0] - cx;
+  let dz = t[1] - cz;
+  const len = Math.hypot(dx, dz);
+  if (len < 1e-6) return [cx, cz];
+  dx /= len;
+  dz /= len;
+  const tx = Math.abs(dx) > 1e-6 ? c.size[0] / 2 / Math.abs(dx) : Infinity;
+  const tz = Math.abs(dz) > 1e-6 ? c.size[2] / 2 / Math.abs(dz) : Infinity;
+  const k = Math.min(tx, tz);
+  return [cx + dx * k, cz + dz * k];
+}
+
+const corridors = scene.corridors
+  .map((cor) => {
+    const toC = scene.chambers.find((c) => c.id === cor.to);
+    if (!toC) return null;
+    const toCen: P = [toC.position[0], toC.position[2]];
+    let p1: P;
+    let entrance = false;
+    if (cor.from === 'entrance') {
+      p1 = [toCen[0], toCen[1] + toC.size[2] / 2 + cor.length]; // 入口在 +z 外侧
+      entrance = true;
+    } else {
+      const fromC = scene.chambers.find((c) => c.id === cor.from);
+      if (!fromC) return null;
+      p1 = edge(fromC, toCen);
+    }
+    const p2 = edge(toC, p1);
+    let dx = p2[0] - p1[0];
+    let dz = p2[1] - p1[1];
+    const len = Math.hypot(dx, dz);
+    if (len < 1e-6) return null;
+    dx /= len;
+    dz /= len;
+    const ux = -dz; // 垂直方向
+    const uz = dx;
+    const hw = cor.width / 2;
+    const poly: P[] = [
+      [p1[0] + ux * hw, p1[1] + uz * hw],
+      [p2[0] + ux * hw, p2[1] + uz * hw],
+      [p2[0] - ux * hw, p2[1] - uz * hw],
+      [p1[0] - ux * hw, p1[1] - uz * hw],
+    ];
+    return { p1, p2, poly, entrance, dir: [dx, dz] as P };
+  })
+  .filter((c): c is NonNullable<typeof c> => c !== null);
+
+// 图幅范围：墓室 + 甬道（含墓道延伸）
+const xs = [
+  ...scene.chambers.flatMap((c) => [c.position[0] - c.size[0] / 2, c.position[0] + c.size[0] / 2]),
+  ...corridors.flatMap((c) => c.poly.map((p) => p[0])),
+];
+const zs = [
+  ...scene.chambers.flatMap((c) => [c.position[2] - c.size[2] / 2, c.position[2] + c.size[2] / 2]),
+  ...corridors.flatMap((c) => c.poly.map((p) => p[1])),
+];
+const pad = 2;
+const padBottom = corridors.some((c) => c.entrance) ? 4.5 : pad;
+const minX = Math.min(...xs) - pad;
+const maxX = Math.max(...xs) + pad;
+const minZ = Math.min(...zs) - pad;
+const maxZ = Math.max(...zs) + padBottom;
+const W = (maxX - minX) * S;
+const H = (maxZ - minZ) * S;
+const px = (x: number) => (x - minX) * S;
+const pz = (z: number) => (z - minZ) * S;
+
+const chamberName = (id: string) => scene.chambers.find((c) => c.id === id)?.name ?? id;
+const entranceCor = corridors.find((c) => c.entrance);
+const polyStr = (poly: P[]) => poly.map((p) => `${px(p[0])},${pz(p[1])}`).join(' ');
+---
+
+<figure class="tomb-plan">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="墓室平面示意图">
+    <defs>
+      <marker id="plan-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 1 L 9 5 L 0 9 z" fill="#9a8f7d" />
+      </marker>
+    </defs>
+
+    {/* 甬道：填充面 + 双线墙 */}
+    {
+      corridors.map((c) => (
+        <g>
+          <polygon points={polyStr(c.poly)} fill="#17130e" stroke="none" />
+          <line x1={px(c.poly[0][0])} y1={pz(c.poly[0][1])} x2={px(c.poly[1][0])} y2={pz(c.poly[1][1])} stroke="#6b5b3e" stroke-width="1.5" />
+          <line x1={px(c.poly[3][0])} y1={pz(c.poly[3][1])} x2={px(c.poly[2][0])} y2={pz(c.poly[2][1])} stroke="#6b5b3e" stroke-width="1.5" />
+        </g>
+      ))
+    }
+
+    {/* 墓室：双线墙身 + 券顶虚线 + 室名 */}
+    {
+      scene.chambers.map((c) => {
+        const [w, , d] = c.size;
+        const [cx, , cz] = c.position;
+        const x0 = px(cx - w / 2);
+        const y0 = pz(cz - d / 2);
+        const inset = WALL_INSET * S;
+        return (
+          <g>
+            <rect x={x0} y={y0} width={w * S} height={d * S} fill="#1e1913" stroke="#8a744e" stroke-width="2" />
+            <rect x={x0 + inset} y={y0 + inset} width={w * S - inset * 2} height={d * S - inset * 2} fill="none" stroke="#5c4c34" stroke-width="1" />
+            {c.vault === 'barrel' && (
+              <line
+                x1={px(w >= d ? cx - w / 2 + 1 : cx)}
+                y1={pz(w >= d ? cz : cz - d / 2 + 1)}
+                x2={px(w >= d ? cx + w / 2 - 1 : cx)}
+                y2={pz(w >= d ? cz : cz + d / 2 - 1)}
+                stroke="#4a4032"
+                stroke-width="1"
+                stroke-dasharray="6 4"
+              />
+            )}
+            {c.vault === 'dome' && (
+              <circle cx={px(cx)} cy={pz(cz)} r={(Math.min(w, d) / 2 - 0.4) * S} fill="none" stroke="#4a4032" stroke-width="1" stroke-dasharray="6 4" />
+            )}
+            <text x={px(cx)} y={y0 + 16} fill="#c9a45c" font-size="13" text-anchor="middle">
+              {c.name}
+            </text>
+          </g>
+        );
+      })
+    }
+
+    {/* 文物：编号点位 */}
+    {
+      scene.artifacts.map((a, i) => (
+        <g>
+          <circle cx={px(a.position[0])} cy={pz(a.position[2])} r="9" fill="#0d0b08" stroke="#c9a45c" stroke-width="1.5" />
+          <text x={px(a.position[0])} y={pz(a.position[2]) + 4} fill="#c9a45c" font-size="11" text-anchor="middle">
+            {i + 1}
+          </text>
+        </g>
+      ))
+    }
+
+    {/* 墓道入口箭头 */}
+    {
+      entranceCor && (
+        <g>
+          <line
+            x1={px(entranceCor.p1[0] + entranceCor.dir[0] * 3)}
+            y1={pz(entranceCor.p1[1] + entranceCor.dir[1] * 3)}
+            x2={px(entranceCor.p1[0] + entranceCor.dir[0] * 0.5)}
+            y2={pz(entranceCor.p1[1] + entranceCor.dir[1] * 0.5)}
+            stroke="#9a8f7d"
+            stroke-width="1.5"
+            marker-end="url(#plan-arrow)"
+          />
+          <text x={px(entranceCor.p1[0])} y={pz(entranceCor.p1[1] + 3.2)} fill="#9a8f7d" font-size="12" text-anchor="middle">
+            墓道
+          </text>
+        </g>
+      )
+    }
+
+    {/* 比例尺 */}
+    <g>
+      <line x1="14" y1={H - 16} x2={14 + 5 * S} y2={H - 16} stroke="#9a8f7d" stroke-width="1.5" />
+      <line x1="14" y1={H - 21} x2="14" y2={H - 11} stroke="#9a8f7d" stroke-width="1.5" />
+      <line x1={14 + 5 * S} y1={H - 21} x2={14 + 5 * S} y2={H - 11} stroke="#9a8f7d" stroke-width="1.5" />
+      <text x={14 + 2.5 * S} y={H - 22} fill="#9a8f7d" font-size="11" text-anchor="middle">
+        5m
+      </text>
+    </g>
+  </svg>
+
+  <figcaption>
+    <ol class="plan-legend">
+      {
+        scene.artifacts.map((a, i) => (
+          <li>
+            <span class="plan-num">{i + 1}</span>
+            <strong>{artifactNames[a.id] ?? a.id}</strong>
+            <span class="meta"> · {chamberName(a.chamber)}</span>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="meta">平面示意图 · 由场景数据自动生成 · 虚线为券顶轴线</p>
+  </figcaption>
+</figure>
+
+<style>
+  .tomb-plan {
+    margin: 0;
+  }
+  .tomb-plan svg {
+    width: 100%;
+    height: auto;
+    background: #0d0b08;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+  }
+  .plan-legend {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  .plan-num {
+    display: inline-grid;
+    place-items: center;
+    width: 1.3em;
+    height: 1.3em;
+    margin-right: 0.35em;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    color: var(--accent);
+    font-size: 0.75em;
+  }
+</style>

@@ -1,0 +1,168 @@
+---
+import type { SceneConfig } from '../lib/scene/types';
+
+interface Props {
+  config: SceneConfig;
+}
+
+const { config } = Astro.props;
+---
+
+<div class="tomb-scene" data-config={JSON.stringify(config)}>
+  <div class="ts-viewport">
+    <div class="ts-loading">加载 3D 场景…</div>
+  </div>
+  <div class="ts-vignette"></div>
+  <div class="ts-toolbar">
+    <button data-mode="orbit" class="active">俯瞰</button>
+    <button data-mode="roam">漫游</button>
+  </div>
+  <div class="ts-hint"></div>
+  <div class="ts-panel" hidden>
+    <button class="ts-panel-close" aria-label="关闭">×</button>
+    <h3 class="ts-panel-name"></h3>
+    <p class="ts-panel-desc"></p>
+    <a class="ts-panel-link" href="#">查看详情 →</a>
+  </div>
+</div>
+<noscript><p class="meta">当前浏览器未启用 JavaScript，请查看下方平面示意图与文字解说。</p></noscript>
+
+<style>
+  .tomb-scene {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #0d0b08;
+  }
+  .ts-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+  }
+  /* 伪全屏（iOS 等不支持 Fullscreen API 时） */
+  .ts-fs {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    border-radius: 0;
+    border: none;
+  }
+  .ts-fs .ts-viewport {
+    aspect-ratio: auto;
+    height: 100%;
+    max-height: none;
+  }
+  .ts-viewport {
+    aspect-ratio: 16 / 9;
+    min-height: 320px;
+    max-height: 72vh;
+    touch-action: none;
+  }
+  /* 原生全屏时铺满 */
+  .tomb-scene:fullscreen .ts-viewport {
+    aspect-ratio: auto;
+    height: 100%;
+    max-height: none;
+  }
+  .ts-viewport canvas {
+    display: block;
+  }
+  .ts-loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+  }
+  .ts-ready .ts-loading {
+    display: none;
+  }
+  .ts-toolbar {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    display: flex;
+    gap: 0.4rem;
+  }
+  .ts-toolbar button {
+    background: rgba(20, 17, 13, 0.75);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .ts-toolbar button.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .ts-hint {
+    position: absolute;
+    left: 0.6rem;
+    bottom: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: rgba(20, 17, 13, 0.6);
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    pointer-events: none;
+  }
+  .ts-panel {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 2.4rem;
+    background: rgba(30, 26, 20, 0.92);
+    border: 1px solid var(--accent);
+    border-radius: 0.5rem;
+    padding: 0.8rem 1rem;
+  }
+  .ts-panel h3 {
+    margin: 0 0 0.3rem;
+    color: var(--accent);
+  }
+  .ts-panel p {
+    margin: 0 0 0.4rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ts-panel-close {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.6rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  @media (min-width: 640px) {
+    .ts-panel {
+      left: 0.6rem;
+      right: auto;
+      max-width: 22rem;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.tomb-scene').forEach((el) => {
+    const io = new IntersectionObserver(
+      async (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        const { initTombScene } = await import('../lib/scene/main');
+        initTombScene(el);
+      },
+      { rootMargin: '300px' },
+    );
+    io.observe(el);
+  });
+</script>

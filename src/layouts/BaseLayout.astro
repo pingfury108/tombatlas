@@ -1,0 +1,83 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  ogType?: 'website' | 'article';
+  jsonld?: Record<string, unknown>;
+}
+
+const { title, description, ogType, jsonld } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead title={title} description={description} ogType={ogType} jsonld={jsonld} />
+    <style is:global>
+      :root {
+        --bg: #14110d;
+        --fg: #e8e0d2;
+        --muted: #9a8f7d;
+        --accent: #c9a45c;
+        --card: #1e1a14;
+        --border: #332c22;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Songti SC', 'Noto Serif SC', serif;
+        line-height: 1.75;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .container { max-width: 60rem; margin: 0 auto; padding: 0 1.25rem; }
+      header.site { border-bottom: 1px solid var(--border); padding: 1rem 0; }
+      header.site .container { display: flex; align-items: baseline; gap: 1.5rem; }
+      header.site .logo { font-size: 1.25rem; font-weight: 700; color: var(--fg); }
+      header.site nav a { color: var(--muted); margin-right: 1rem; }
+      main { padding: 2rem 0 4rem; }
+      footer.site { border-top: 1px solid var(--border); padding: 1.5rem 0; color: var(--muted); font-size: 0.875rem; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+      }
+      .meta { color: var(--muted); font-size: 0.9rem; }
+      .tag {
+        display: inline-block;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 0 0.6em;
+        margin-right: 0.4em;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="container">
+        <a class="logo" href="/">幽宫图志</a>
+        <nav>
+          <a href="/#tombs">墓室</a>
+          <a href="/#artifacts">文物</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <div class="container">
+        <slot />
+      </div>
+    </main>
+    <footer class="site">
+      <div class="container">
+        幽宫图志 TombAtlas — 古墓主题在线 3D 图志 · 内容由站长自维护 · 演示数据
+      </div>
+    </footer>
+  </body>
+</html>
